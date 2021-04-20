@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@2.0.5/build/pure-min.css" integrity="sha256-LQsRzJWwRtq9q5pbvpwwNdLbHXA25kSsu54At8Y58/Y=" crossorigin="anonymous">
+<title>NDN Experiment on Fed4FIRE</title>
+<body style="max-width: 960px; margin: 1ex auto;">
+
+<h1>NDN Experiment on Fed4FIRE</h1>
+<details>
+<summary>Instructions</summary>
+<ol>
+  <li>Choose a hardware type in <em>Request RSpec</em> section.</li>
+  <li>In jFed, select <em>Open Online</em> and paste the request RSpec URI.</li>
+  <li>Start the experiment, and wait for nodes to become ready.</li>
+  <li>Export the manifest RSpec, and provide the file in <em>Setup Script</em> section.</li>
+  <li>Generate a setup script with desired actions.</li>
+  <li>Paste the script into jFed <em>Multi Command</em> dialog.</li>
+</ol>
+</details>
+
+<h2>Request RSpec</h2>
+<form class="pure-form pure-form-aligned">
+  <fieldset>
+    <div class="pure-control-group">
+      <label for="testbed-hardware">testbed and hardware</label>
+      <select id="testbed-hardware">
+        <option>----</option>
+      </select>
+      <span id="hardware-avail" class="pure-form-message-inline"></span>
+    </div>
+    <div class="pure-control-group">
+      <label for="node-count">node count</label>
+      <input id="node-count" type="number" value="3" min="2" max="250">
+    </div>
+    <div class="pure-control-group">
+      <label for="request-rspec">request RSpec</label>
+      <input id="request-rspec" type="url" size="60" readonly>
+    </div>
+  </fieldset>
+</form>
+
+<h2>Setup Script</h2>
+<form id="setup-script-form" class="pure-form pure-form-aligned">
+  <fieldset>
+    <div class="pure-control-group">
+      <label for="manifest-file">manifest RSpec</label>
+      <input id="manifest-file" type="file" accept=".mrspec">
+    </div>
+    <div class="pure-control-group">
+      <label for="setup-action">tasks</label>
+      <select id="setup-action" multiple size="8">
+        <option value="install_packages">install Docker and other packages</option>
+        <option value="rename_host_intf">prepare topology and set hostnames</option>
+        <option value="download_ndndpdk">download NDN-DPDK image</option>
+        <option value="start_ndndpdk">start NDN-DPDK container</option>
+        <option value="activate_ndndpdk">activate NDN-DPDK forwarder</option>
+        <option value="setup_face_routes">setup faces and routes</option>
+        <option value="start_jrproxy">start NDN-DPDK JSON-RPC proxy</option>
+      </select>
+      <span class="pure-form-message-inline">hold SHIFT or CTRL key to select multiple, or <a id="setup-action-all" href="">select all</a></span>
+    </div>
+    <div class="pure-controls">
+      <input type="submit" class="pure-button pure-button-primary" value="generate setup script">
+    </div>
+    <div class="pure-controls">
+      <textarea id="setup-script" rows="10" cols="80" readonly></textarea>
+    </div>
+  </fieldset>
+</form>
+
+<script src="static/app.js"></script>

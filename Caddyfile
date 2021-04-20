@@ -1,0 +1,5 @@
+http://localhost:8000 {
+  root * /home/web/NDNrspec/www
+  php_fastcgi unix//run/php/php7.4-fpm.sock
+  file_server /static/*
+}
