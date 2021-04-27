@@ -27,9 +27,14 @@ install_packages() {
   touch /tmp/NDNrspec/install_packages.done
 }
 
-rename_host_intf() {
+prepare_netif() {
   if [[ -f /tmp/NDNrspec/ifname.txt ]]; then
     return
+  fi
+  install_packages
+
+  if ip -j addr | jq -e '[.[].addr_info[] | select(.local | startswith("2001:6a8:1d80:"))] | length > 0' >/dev/null; then
+    wget -O- -nv --ciphers DEFAULT@SECLEVEL=1 https://www.wall2.ilabt.iminds.be/enable-nat.sh | bash
   fi
 
   local MATCH=$(jq -nr --argjson L "$(ip -j link)" --argjson J "$J" '
@@ -54,10 +59,29 @@ download_ndndpdk() {
   if [[ -f /tmp/NDNrspec/download_ndndpdk.done ]]; then
     return
   fi
+  prepare_netif
 
-  local NDNDPDK_DOCKER_IMAGE=$(echo $J | jq -r '.ndndpdkDockerImage')
-  docker pull ${NDNDPDK_DOCKER_IMAGE}
-  docker tag ${NDNDPDK_DOCKER_IMAGE} ndn-dpdk
+  local NDNDPDK_DOCKER_IMAGE=$(echo "$J" | jq -r '.ndndpdkDockerImage')
+  if [[ ${NDNDPDK_DOCKER_IMAGE} =~ docker.yoursunny.dev/ ]]; then
+    local REGISTRY_CLIENT_BIN=/tmp/NDNrspec/Docker-registry-NDN-client.exe
+    curl -o ${REGISTRY_CLIENT_BIN} -fL https://docker.yoursunny.dev/client/linux-amd64/client
+    chmod +x ${REGISTRY_CLIENT_BIN}
+    ${REGISTRY_CLIENT_BIN} &
+    local REGISTRY_CLIENT_PID=$!
+    sleep 10
+
+    NDNDPDK_DOCKER_IMAGE_PROXY=${NDNDPDK_DOCKER_IMAGE/docker.yoursunny.dev/localhost:5000}
+    if docker pull ${NDNDPDK_DOCKER_IMAGE_PROXY}; then
+      docker tag ${NDNDPDK_DOCKER_IMAGE_PROXY} ndn-dpdk
+    else
+      echo 'docker pull over NDN failed'
+    fi
+    kill ${REGISTRY_CLIENT_PID}
+  fi
+  if ! docker image inspect ndn-dpdk >/dev/null; then
+    docker pull ${NDNDPDK_DOCKER_IMAGE}
+    docker tag ${NDNDPDK_DOCKER_IMAGE} ndn-dpdk
+  fi
 
   CTID=$(docker container create ndn-dpdk)
   for S in dpdk-devbind.py dpdk-hugepages.py; do
@@ -100,7 +124,7 @@ start_ndndpdk() {
   chmod +x /usr/local/bin/ndndpdk-ctrl
 }
 
-activate_ndndpdk() {
+activate_forwarder() {
   jq -n '{
     eal: {
       coresPerNuma: { "0":4, "1":4, "2":4, "3":4 }

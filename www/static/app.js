@@ -60,7 +60,6 @@ $requestRSpec.addEventListener("focus", () => $requestRSpec.select());
 
 const $setupScriptForm = document.querySelector("#setup-script-form");
 const $manifestFile = document.querySelector("#manifest-file");
-const $setupAction = document.querySelector("#setup-action");
 const $setupScript = document.querySelector("#setup-script");
 $setupScriptForm.addEventListener("submit", async (evt) => {
   evt.preventDefault();
@@ -78,30 +77,16 @@ $setupScriptForm.addEventListener("submit", async (evt) => {
       reader.readAsText(file);
     });
 
-    const formData = new FormData();
-    formData.set("manifest", manifest);
-    formData.set("actions", (() => {
-      const actions = [];
-      for (const $option of $setupAction.selectedOptions) {
-        actions.push($option.value);
-      }
-      return actions.join();
-    })());
-
+    const body = new FormData($setupScriptForm);
+    body.set("manifest", manifest);
     $setupScript.value = await fetchAs("text", "setup", {
       method: "POST",
-      body: formData,
+      body: body,
     });
   } catch (err) {
     $setupScript.value = `# ${err}`;
   }
 });
 $setupScript.addEventListener("focus", () => $setupScript.select());
-document.querySelector("#setup-action-all").addEventListener("click", (evt) => {
-  evt.preventDefault();
-  for (const $option of $setupAction.options) {
-    $option.selected = true;
-  }
-});
 
 })().catch(console.error);

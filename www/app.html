@@ -44,18 +44,12 @@
       <label for="manifest-file">manifest RSpec</label>
       <input id="manifest-file" type="file" accept=".mrspec">
     </div>
-    <div class="pure-control-group">
-      <label for="setup-action">tasks</label>
-      <select id="setup-action" multiple size="8">
-        <option value="install_packages">install Docker and other packages</option>
-        <option value="rename_host_intf">prepare topology and set hostnames</option>
-        <option value="download_ndndpdk">download NDN-DPDK image</option>
-        <option value="start_ndndpdk">start NDN-DPDK container</option>
-        <option value="activate_ndndpdk">activate NDN-DPDK forwarder</option>
-        <option value="setup_face_routes">setup faces and routes</option>
-        <option value="start_jrproxy">start NDN-DPDK JSON-RPC proxy</option>
-      </select>
-      <span class="pure-form-message-inline">hold SHIFT or CTRL key to select multiple, or <a id="setup-action-all" href="">select all</a></span>
+    <div class="pure-controls">
+      <label class="pure-checkbox"><input type="checkbox" name="a[]" value="download_ndndpdk" checked> download NDN-DPDK image</label>
+      <label class="pure-checkbox"><input type="checkbox" name="a[]" value="start_ndndpdk" checked> start NDN-DPDK container</label>
+      <label class="pure-checkbox"><input type="checkbox" name="a[]" value="activate_forwarder"> activate NDN-DPDK forwarder</label>
+      <label class="pure-checkbox"><input type="checkbox" name="a[]" value="setup_face_routes"> setup faces and routes</label>
+      <label class="pure-checkbox"><input type="checkbox" name="a[]" value="start_jrproxy"> start NDN-DPDK JSON-RPC proxy</label>
     </div>
     <div class="pure-controls">
       <input type="submit" class="pure-button pure-button-primary" value="generate setup script">

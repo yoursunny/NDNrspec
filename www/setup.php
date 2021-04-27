@@ -41,8 +41,9 @@ printf("\nJ=%s\n", escapeshellarg(json_encode(array(
   "nodes"=>$nodes,
 ))));
 
-$actions = explode(",", $_POST["actions"]);
-foreach ($actions as $action) {
-  printf("%s\n", $action);
+if (is_array($_POST["a"])) {
+  foreach ($_POST["a"] as $a) {
+    printf("%s\n", escapeshellcmd($a));
+  }
 }
 ?>

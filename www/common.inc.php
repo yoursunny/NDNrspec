@@ -18,7 +18,7 @@ foreach ([4, 5] as $p) {
     "type"=>sprintf("pcgen02-%dp", $p),
     "componentManager"=>"urn:publicid:IDN+wall1.ilabt.iminds.be+authority+cm",
     "diskImage"=>"urn:publicid:IDN+wall1.ilabt.iminds.be+image+emulab-ops:UBUNTU20-64-STD",
-    "ndndpdkDockerTag"=>"nehalem",
+    "ndndpdkDockerTag"=>"nehalem", // nehalem
   ];
 }
 foreach ([1, 2, 4, 7] as $p) {
@@ -49,6 +49,13 @@ $supportedHardwareTypes["emulab-d710"] = (object)[
   "type"=>"d710",
   "componentManager"=>"urn:publicid:IDN+emulab.net+authority+cm",
   "diskImage"=>"urn:publicid:IDN+emulab.net+image+emulab-ops:UBUNTU20-64-STD",
-  "ndndpdkDockerTag"=>"nehalem",
+  "ndndpdkDockerTag"=>"nehalem", // nehalem
+];
+$supportedHardwareTypes["cloudlabUtah-xl170"] = (object)[
+  "testbed"=>"cloudlabUtah",
+  "type"=>"xl170",
+  "componentManager"=>"urn:publicid:IDN+utah.cloudlab.us+authority+cm",
+  "diskImage"=>"urn:publicid:IDN+utah.cloudlab.us+image+emulab-ops:UBUNTU20-64-STD",
+  "ndndpdkDockerTag"=>"nehalem", // broadwell
 ];
 ?>
