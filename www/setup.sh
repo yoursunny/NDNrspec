@@ -83,11 +83,12 @@ download_ndndpdk() {
     docker tag ${NDNDPDK_DOCKER_IMAGE} ndn-dpdk
   fi
 
+  sudo mkdir -p /usr/local/bin /usr/local/share
   CTID=$(docker container create ndn-dpdk)
-  for S in dpdk-devbind.py dpdk-hugepages.py; do
-    docker cp $CTID:/usr/local/bin/$S - | tar -x -C /usr/local/bin
-  done
-  docker rm $CTID
+  docker cp $CTID:/usr/local/bin/dpdk-devbind.py - | sudo tar -x -C /usr/local/bin
+  docker cp $CTID:/usr/local/bin/dpdk-hugepages.py - | sudo tar -x -C /usr/local/bin
+  docker cp $CTID:/usr/local/share/ndn-dpdk - | sudo tar -x -C /usr/local/share
+  docker container rm $CTID
 
   dpdk-hugepages.py --pagesize 2M --mount
   for NODE in /sys/devices/system/node/node*; do
@@ -127,7 +128,13 @@ start_ndndpdk() {
 activate_forwarder() {
   jq -n '{
     eal: {
-      coresPerNuma: { "0":4, "1":4, "2":4, "3":4 }
+      lcoresPerNuma: { "0": 6 },
+    },
+    lcoreAlloc: {
+      RX: { "0": 1 },
+      TX: { "0": 1 },
+      FWD: { "0": 2 },
+      CRYPTO: { "0": 1 }
     },
     mempool: {
       DIRECT: { capacity: 65535, dataroom: 2200 },

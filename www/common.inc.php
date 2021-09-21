@@ -18,7 +18,7 @@ foreach ([4, 5] as $p) {
     "type"=>sprintf("pcgen02-%dp", $p),
     "componentManager"=>"urn:publicid:IDN+wall1.ilabt.iminds.be+authority+cm",
     "diskImage"=>"urn:publicid:IDN+wall1.ilabt.iminds.be+image+emulab-ops:UBUNTU20-64-STD",
-    "ndndpdkDockerTag"=>"nehalem", // nehalem
+    "ndndpdkDockerTag"=>"nehalem-threadsleep", // nehalem
   ];
 }
 foreach ([1, 2, 4, 7] as $p) {
@@ -27,7 +27,7 @@ foreach ([1, 2, 4, 7] as $p) {
     "type"=>sprintf("pcgen03-%dp", $p),
     "componentManager"=>"urn:publicid:IDN+wall2.ilabt.iminds.be+authority+cm",
     "diskImage"=>"urn:publicid:IDN+wall2.ilabt.iminds.be+image+emulab-ops:UBUNTU20-64-STD",
-    "ndndpdkDockerTag"=>"nehalem", // westmere
+    "ndndpdkDockerTag"=>"nehalem-threadsleep", // westmere
   ];
 }
 $supportedHardwareTypes["grid5000-paravance"] = (object)[
@@ -35,27 +35,27 @@ $supportedHardwareTypes["grid5000-paravance"] = (object)[
   "type"=>"paravance-rennes",
   "componentManager"=>"urn:publicid:IDN+am.grid5000.fr+authority+am",
   "diskImage"=>"urn:publicid:IDN+am.grid5000.fr+image+kadeploy3:ubuntu2004-x64-min",
-  "ndndpdkDockerTag"=>"nehalem", // haswell
+  "ndndpdkDockerTag"=>"nehalem-threadsleep", // haswell
 ];
 $supportedHardwareTypes["grid5000-gros"] = (object)[
   "testbed"=>"grid5000",
   "type"=>"gros-nancy",
   "componentManager"=>"urn:publicid:IDN+am.grid5000.fr+authority+am",
   "diskImage"=>"urn:publicid:IDN+am.grid5000.fr+image+kadeploy3:ubuntu2004-x64-min",
-  "ndndpdkDockerTag"=>"nehalem", // cascadelake
+  "ndndpdkDockerTag"=>"nehalem-threadsleep", // cascadelake
 ];
 $supportedHardwareTypes["emulab-d710"] = (object)[
   "testbed"=>"emulab",
   "type"=>"d710",
   "componentManager"=>"urn:publicid:IDN+emulab.net+authority+cm",
   "diskImage"=>"urn:publicid:IDN+emulab.net+image+emulab-ops:UBUNTU20-64-STD",
-  "ndndpdkDockerTag"=>"nehalem", // nehalem
+  "ndndpdkDockerTag"=>"nehalem-threadsleep", // nehalem
 ];
 $supportedHardwareTypes["cloudlabUtah-xl170"] = (object)[
   "testbed"=>"cloudlabUtah",
   "type"=>"xl170",
   "componentManager"=>"urn:publicid:IDN+utah.cloudlab.us+authority+cm",
   "diskImage"=>"urn:publicid:IDN+utah.cloudlab.us+image+emulab-ops:UBUNTU20-64-STD",
-  "ndndpdkDockerTag"=>"nehalem", // broadwell
+  "ndndpdkDockerTag"=>"nehalem-threadsleep", // broadwell
 ];
 ?>
