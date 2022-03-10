@@ -3,10 +3,8 @@ async function fetchAs(fmt, ...arg) {
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
-  return response[fmt].apply(response);
+  return response[fmt].call(response);
 }
-
-(async () => {
 
 document.querySelectorAll("form").forEach(
   ($form) => $form.addEventListener("submit", (evt) => evt.preventDefault()),
@@ -38,7 +36,7 @@ $hardware.addEventListener("change", async () => {
   $hardwareAvail.textContent = `loading ${ht.testbed} free resources`;
   try {
     const advertisement = await fetchAs("json", `advertisement/${ht.testbed}.json`);
-    $hardwareAvail.textContent = `${advertisement.availHardware[ht.type]} free ${ht.type} at ${ht.testbed}`;
+    $hardwareAvail.textContent = `${advertisement.availHardware[ht.type] ?? 0} free ${ht.type} at ${ht.testbed}`;
   } catch (err) {
     $hardwareAvail.textContent = `free resources unknown ${err}`;
   }
@@ -88,5 +86,3 @@ $setupScriptForm.addEventListener("submit", async (evt) => {
   }
 });
 $setupScript.addEventListener("focus", () => $setupScript.select());
-
-})().catch(console.error);

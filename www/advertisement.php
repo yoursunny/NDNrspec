@@ -14,7 +14,7 @@ if ($updated !== FALSE && $updated + 150 > time()) {
 
 $flsmonUri = sprintf("https://flsmonitor-api.fed4fire.eu/result?testbed=%s&testdefinitionname=listResources&last=1", $testbed);
 $flsmonResult = json_decode(file_get_contents($flsmonUri));
-if (!is_array($flsmonResult) || count($flsmonResult) !== 1 || $flsmonResult[0]->summary !== "SUCCESS") {
+if (!is_array($flsmonResult) || count($flsmonResult) < 1 || $flsmonResult[0]->summary !== "SUCCESS") {
   http_response_code(500);
   die;
 }

@@ -21,7 +21,7 @@ install_packages() {
   apt-get -y -qq update
   apt-get -y -qq install ca-certificates curl htop jq
 
-  curl -sfL https://get.docker.com | bash
+  curl -fsLS https://get.docker.com | bash
   awk -F: '$6~"^/users/" {printf "usermod -a -G docker %s\n", $1}' /etc/passwd | sh
 
   touch /tmp/NDNrspec/install_packages.done
@@ -64,7 +64,7 @@ download_ndndpdk() {
   local NDNDPDK_DOCKER_IMAGE=$(echo "$J" | jq -r '.ndndpdkDockerImage')
   if [[ ${NDNDPDK_DOCKER_IMAGE} =~ docker.yoursunny.dev/ ]]; then
     local REGISTRY_CLIENT_BIN=/tmp/NDNrspec/Docker-registry-NDN-client.exe
-    curl -o ${REGISTRY_CLIENT_BIN} -fL https://docker.yoursunny.dev/client/linux-amd64/client
+    curl -o ${REGISTRY_CLIENT_BIN} -fsLS https://docker.yoursunny.dev/client/linux-amd64/client
     chmod +x ${REGISTRY_CLIENT_BIN}
     ${REGISTRY_CLIENT_BIN} &
     local REGISTRY_CLIENT_PID=$!
@@ -90,10 +90,24 @@ download_ndndpdk() {
   docker cp $CTID:/usr/local/share/ndn-dpdk - | sudo tar -x -C /usr/local/share
   docker container rm $CTID
 
+  install /dev/stdin /usr/local/bin/ndndpdk-ctrl <<'EOT'
+#!/bin/bash
+set -eo pipefail
+GQLSERVER=$(cat /tmp/NDNrspec/gqlserver.txt)
+exec docker run -i --rm ndn-dpdk \
+  ndndpdk-ctrl --gqlserver $GQLSERVER "$@"
+EOT
+  install /dev/stdin /usr/local/bin/ndndpdk-godemo <<'EOT'
+#!/bin/bash
+set -eo pipefail
+GQLSERVER=$(cat /tmp/NDNrspec/gqlserver.txt)
+exec docker run -i --rm --mount type=volume,source=run-ndn,target=/run/ndn ndn-dpdk \
+  ndndpdk-godemo --gqlserver $GQLSERVER "$@"
+EOT
+
   dpdk-hugepages.py --pagesize 2M --mount
   for NODE in /sys/devices/system/node/node*; do
-    NODE=$(basename $NODE)
-    NODE=${NODE/node/}
+    NODE=$(basename $NODE); NODE=${NODE/node/}
     while ! dpdk-hugepages.py --pagesize 2M --node $NODE --reserve 4G; do
       sleep 1
     done
@@ -113,16 +127,11 @@ start_ndndpdk() {
     ndn-dpdk
 
   local IFNAME=$(cat /tmp/NDNrspec/ifname.txt)
-  local NETNS=$(docker inspect --format='{{.State.Pid}}' ndndpdk-svc)
+  local NETNS=$(docker inspect -f '{{.State.Pid}}' ndndpdk-svc)
   sudo ip link set $IFNAME netns $NETNS
   docker exec ndndpdk-svc ip link set $IFNAME up
 
-  GQLSERVER=$(docker inspect -f 'http://{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}:3030/' ndndpdk-svc)
-  (
-    echo '#!/bin/bash'
-    echo 'exec docker run -i --rm ndn-dpdk ndndpdk-ctrl --gqlserver '$GQLSERVER' "$@"'
-  ) > /usr/local/bin/ndndpdk-ctrl
-  chmod +x /usr/local/bin/ndndpdk-ctrl
+  docker inspect -f 'http://{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}:3030/' ndndpdk-svc > /tmp/NDNrspec/gqlserver.txt
 }
 
 activate_forwarder() {
@@ -144,17 +153,22 @@ activate_forwarder() {
 }
 
 setup_face_routes() {
+  if [[ -z $(ndndpdk-ctrl list-ethdev) ]]; then
+    local IFNAME=$(cat /tmp/NDNrspec/ifname.txt)
+    ndndpdk-ctrl create-eth-port --netif $IFNAME
+  fi
+
   jq -nr --arg id "$(hostname -s)" --argjson J "$J" '
     $J.nodes[] | select(.id==$id) | .mac as $local |
     $J.nodes[] | select(.id!=$id) | (
-      ("FACEID=$(ndndpdk-ctrl create-ether-face --local " + $local + " --remote " + .mac + " | jq -r .id)"),
+      ("FACEID=$(ndndpdk-ctrl create-ether-face --local " + $local + " --remote " + .mac + " | tee /dev/stderr | jq -r .id)"),
       ("ndndpdk-ctrl insert-fib --name /" + .id + " --nexthop $FACEID")
     )
   ' | sh
 }
 
 start_jrproxy() {
-  GQLSERVER=$(docker inspect -f 'http://{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}:3030/' ndndpdk-svc)
+  local GQLSERVER=$(cat /tmp/NDNrspec/gqlserver.txt)
   docker rm -f ndndpdk-jrproxy
   docker run -d --name ndndpdk-jrproxy \
     -p 127.0.0.1:6345:6345 \
