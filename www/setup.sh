@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 if [[ $(id -u) -ne 0 ]]; then
   exec sudo bash "${BASH_SOURCE[0]}"
 fi
@@ -16,10 +16,10 @@ install_packages() {
     "--force-confold";
   }
   APT::Install-Recommends "no";
-  APT::Install-Suggests "no";' > /etc/apt/apt.conf.d/80custom
+  APT::Install-Suggests "no";' >/etc/apt/apt.conf.d/80custom
 
-  apt-get -y -qq update
-  apt-get -y -qq install ca-certificates curl htop jq
+  env DEBIAN_FRONTEND=noninteractive apt-get -y -qq update
+  env DEBIAN_FRONTEND=noninteractive apt-get -y -qq install apparmor ca-certificates curl htop jq
 
   curl -fsLS https://get.docker.com | bash
   awk -F: '$6~"^/users/" {printf "usermod -a -G docker %s\n", $1}' /etc/passwd | sh
@@ -92,14 +92,14 @@ download_ndndpdk() {
 
   install /dev/stdin /usr/local/bin/ndndpdk-ctrl <<'EOT'
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 GQLSERVER=$(cat /tmp/NDNrspec/gqlserver.txt)
 exec docker run -i --rm ndn-dpdk \
   ndndpdk-ctrl --gqlserver $GQLSERVER "$@"
 EOT
   install /dev/stdin /usr/local/bin/ndndpdk-godemo <<'EOT'
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 GQLSERVER=$(cat /tmp/NDNrspec/gqlserver.txt)
 exec docker run -i --rm --mount type=volume,source=run-ndn,target=/run/ndn ndn-dpdk \
   ndndpdk-godemo --gqlserver $GQLSERVER "$@"
@@ -118,6 +118,10 @@ EOT
 
 start_ndndpdk() {
   docker volume create run-ndn
+  umount /run/ndn || true
+  mkdir -p /run/ndn
+  mount --bind $(docker volume inspect -f '{{.Mountpoint}}' run-ndn) /run/ndn
+
   docker rm -f ndndpdk-svc
   docker run -d --name ndndpdk-svc \
     -p 127.0.0.1:3030:3030 \
@@ -131,7 +135,7 @@ start_ndndpdk() {
   sudo ip link set $IFNAME netns $NETNS
   docker exec ndndpdk-svc ip link set $IFNAME up
 
-  docker inspect -f 'http://{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}:3030/' ndndpdk-svc > /tmp/NDNrspec/gqlserver.txt
+  docker inspect -f 'http://{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}:3030/' ndndpdk-svc >/tmp/NDNrspec/gqlserver.txt
 }
 
 activate_forwarder() {
@@ -162,7 +166,7 @@ setup_face_routes() {
     $J.nodes[] | select(.id==$id) | .mac as $local |
     $J.nodes[] | select(.id!=$id) | (
       ("FACEID=$(ndndpdk-ctrl create-ether-face --local " + $local + " --remote " + .mac + " | tee /dev/stderr | jq -r .id)"),
-      ("ndndpdk-ctrl insert-fib --name /" + .id + " --nexthop $FACEID")
+      ("ndndpdk-ctrl insert-fib --name /" + .id + " --nh $FACEID")
     )
   ' | sh
 }
